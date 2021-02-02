@@ -14,14 +14,17 @@ totalCharacters = 0
 passwordCharacters = {"numbers": \
                           (0, 1, 2, 3, 4, 5, 6, 7, 8, 9), \
                       "upper": (
-                      "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S",
-                      "T", "U", "V", "W", "X", "Y", "Z"), \
+                          "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S",
+                          "T", "U", "V", "W", "X", "Y", "Z"), \
                       "lower": (
-                      "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s",
-                      "t", "u", "v", "w", "x", "y", "z") \
+                          "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s",
+                          "t", "u", "v", "w", "x", "y", "z"), \
+                      "symbols" : ("`", "~", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "-", "_", "+", "=", "[", "{", \
+                          "]", "}", "\\", "|", ":", ";", "\"", "'", ",", "<", ".", ">", "/", "?") \
                       }
 
-def parameterGenerator(length, legals, exactness=False):
+
+def parameterGenerator(length, legals):
     global totalCharacters
     for i in range(0, length):
         guess.append(0)
@@ -31,6 +34,7 @@ def parameterGenerator(length, legals, exactness=False):
         for possibility in passwordCharacters[possibleList]:
             guessCharacters.append(possibility)
     totalCharacters = len(guessCharacters)
+
 
 def increment():
     global totalCharacters
@@ -47,6 +51,7 @@ def increment():
             else:
                 good = True
 
+
 def passwordGuesser():
     guessWord = ""
 
@@ -56,13 +61,24 @@ def passwordGuesser():
     return guessWord
 
 
+def shellGuesser(guess, path):
+    attempt = "echo " + guess + " | " + path
+    time.sleep(1) # gives time for program to exit before next attempt
+    return str(subprocess.check_output(attempt, shell=True))
+
+
+def testGuesser(guess):
+    gotIt = "Got it!" if str(guess) == "123456446" else wrongPhrase
+    return gotIt
+
 
 possiblesList = []
-passLength = int(input("How long is the password: "))
+passLength = int(input("How long is the password (set to lowest you know it can be): "))
 # will only try the full length, otherwise sets length as maximum and works up to it
 exactLength = True if input("Exact length? ").lower().startswith("y") else False
 correct = False
-pathToFile = input("Path to file to crack (include the './'): ")
+pathToFile = input("Path to binary to crack (include the './' if in current directory): ")
+wrongPhrase = input("Program output when password is wrong (provide an exact consistent phrase): ")
 
 while True:
     possibles = input("Symbols to guess: ")
@@ -73,24 +89,9 @@ while True:
     else:
         print("Not a valid option, try again")
 
-parameterGenerator(passLength, possiblesList, exactLength)
+parameterGenerator(passLength, possiblesList)
 
-# test code here
-# print("Starting Brute Force...")
-# while not correct:
-#     passGuess = passwordGuesser()
-#     if "bex" == passGuess:
-#         print("\nFound it:", passGuess)
-#         break
-#     print("\rTried: " + passGuess + " ... Taking a nap", end="")
-#     #time.sleep(1)
-#     try:
-#         increment()
-#     except IndexError:
-#         print("\nSorry couldn't find the password =(\nLast password was: " + passGuess)
-#         exit(404)
-
-# real code here
+# execution code here
 print("Starting Brute Force...")
 starting = input("Set a manual start point? ")
 if starting.lower().startswith("y"):
@@ -100,15 +101,23 @@ if starting.lower().startswith("y"):
 
 while not correct:
     passGuess = passwordGuesser()
-    attempt = "echo " + passGuess + " | " + pathToFile
-    check = subprocess.check_output(attempt, shell=True)
-    if "Wrong" not in str(check):
+#    check = shellGuesser(passGuess, pathToFile)  # real check
+    check = testGuesser(passGuess)  # test check; change the test password in the function above
+
+    if wrongPhrase not in check:
         print("\nFound it:", passGuess)
         break
     print("\rTried: " + passGuess + " ... Taking a nap", end="")
-    time.sleep(1)
+
     try:
         increment()
     except IndexError:
-        print("\nSorry couldn't find the password =(\nLast password was: " + passGuess)
-        exit(404)
+        print(f"\rSorry couldn't find the password for length {passLength} =(\nLast password was: " + passGuess)
+        if exactLength == True:
+            exit(404)
+        else:
+            print("Gonna start over with a longer password...")
+            guess.append(0)
+            passLength += 1
+            for letter in guess:
+                guess[letter] = 0
