@@ -11,6 +11,7 @@ guess = []
 guessCharacters = []
 totalCharacters = 0
 
+# dictionary of useable characters
 passwordCharacters = {"numbers": \
                           (0, 1, 2, 3, 4, 5, 6, 7, 8, 9), \
                       "upper": (
@@ -24,6 +25,7 @@ passwordCharacters = {"numbers": \
                       }
 
 
+# uses character dictionary to determine which characters to guess from
 def parameterGenerator(length, legals):
     global totalCharacters
     for i in range(0, length):
@@ -35,7 +37,7 @@ def parameterGenerator(length, legals):
             guessCharacters.append(possibility)
     totalCharacters = len(guessCharacters)
 
-
+# "counting" function to restart from first character when set is complete
 def increment():
     global totalCharacters
     nextLetter = 1
@@ -51,7 +53,7 @@ def increment():
             else:
                 good = True
 
-
+# generates a guess string using the indexes in the "guess" list
 def passwordGuesser():
     guessWord = ""
 
@@ -60,19 +62,19 @@ def passwordGuesser():
 
     return guessWord
 
-
+# sends guess to path and returns response
 def shellGuesser(guess, path):
     attempt = "echo " + guess + " | " + path
     time.sleep(1) # gives time for program to exit before next attempt
     return str(subprocess.check_output(attempt, shell=True))
 
-
+# for testing the program before deployment
 def testGuesser(guess):
     gotIt = "Got it!" if str(guess) == "123456446" else wrongPhrase
     return gotIt
 
 
-possiblesList = []
+possiblesList = [] # intake for user given character names
 passLength = int(input("How long is the password (set to lowest you know it can be): "))
 # will only try the full length, otherwise sets length as maximum and works up to it
 exactLength = True if input("Exact length? ").lower().startswith("y") else False
@@ -80,6 +82,7 @@ correct = False
 pathToFile = input("Path to binary to crack (include the './' if in current directory): ")
 wrongPhrase = input("Program output when password is wrong (provide an exact consistent phrase): ")
 
+# collects info from user and generates list of acceptable characters
 while True:
     possibles = input("Symbols to guess: ")
     if possibles in passwordCharacters:
@@ -93,7 +96,7 @@ parameterGenerator(passLength, possiblesList)
 
 # execution code here
 print("Starting Brute Force...")
-starting = input("Set a manual start point? ")
+starting = input("Set a manual start point? ") # incase program quit unexpectadly and not lose previous work
 if starting.lower().startswith("y"):
     print("Remember to give the value based on the guess list:")
     for i in range(0, len(guess)):
